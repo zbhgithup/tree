@@ -1,0 +1,221 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+#pragma once
+#include <queue>
+#include <iostream>
+using namespace std;
+
+
+template<class T>
+struct BSTNode
+{
+	BSTNode* _pLeft;
+	BSTNode* _pRight;
+	T _key;
+	BSTNode(const T& key)
+		:_pLeft(NULL)
+		,_pRight(NULL)
+		,_key(key)
+	{}
+};
+
+
+template<class T>
+class BinarySeachTree
+{
+	
+public:
+	BinarySeachTree()
+		:_pRoot(NULL)
+	{}
+	BinarySeachTree(T *arr, size_t size)
+	{
+		_pRoot = NULL;
+		for(int i=0;,i<size; i++)
+		{
+			Insert(arr[i]);
+		}
+	}
+	bool Insert(const T& data)
+	{
+		if(NULL == _pRoot)
+		{
+			_pRoot = new BSTNode<T>(data);
+			return true;
+		}
+		BSTNode<T>* pCur = _pRoot;
+		BSTNode<T>* pParent = NULL;
+		while(pCur)
+		{
+			pParent = pCur;
+			if(pCur->_key < data)
+				pCur = pCur->_pRight;
+			else if(pCur->_key > data)
+				pCur = pCur->_pLeft;
+			else
+				return false;
+		}
+		if(pParent->_key < data)
+			pParent->_pRight = new BSTNode<T>(data);
+		if(pParent->_key > data)
+			pParent->_pLeft = new BSTNode<T>(data);
+		return true;
+	}
+	BSTNode<T>* Find(const T& data)
+	{
+		BSTNode<T>* pCur = _pRoot;
+		while(pCur)
+		{
+			if(pCur->_key == data)
+				return pCur;
+			if(pCur->_key <data)
+				pCur = pCur->_pRight;
+			else
+				pCur = pCur->_pLeft;
+		}
+		return NULL;
+	}
+	bool Remove(const T& data)
+	{
+		BSTNode<T>* pCur = _pRoot;
+		BSTNode<T>*pParent  = NULL;
+		while(pCur)
+		{
+			//Ѱ��ɾ���ڵ�
+			if(pCur->_key < data)
+			{
+				pParent = pCur;
+				pCur = pCur->_pRight;
+			}
+			else if(pCur->_key > data)
+			{
+				pParent = pCur;
+				pCur = pCur->_pLeft;
+			}
+			else 
+			{
+				//������ΪNULL
+				if(NULL == pCur->_pLeft)
+				{
+					//�ж��Ƿ�Ϊ���ڵ㣻
+					if(pParent == NULL)
+					{
+						_pRoot = pCur->_pRight;
+					}
+					else
+					{
+						if(pParent->_pLeft == pCur)
+							pParent->_pLeft = pCur->_pRight;
+						else
+							pParent->_pRight = pCur->_pRight;
+					}
+					delete pCur;
+				}
+				else if(NULL == pCur->_pRight)   //��ǰ�ڵ����Һ���ΪNULL
+				{
+					if(NULL == pParent)
+					{
+						_pRoot = pCur->_pLeft;
+					}
+					else
+					{
+						if(pParent->_pLeft == pCur)
+							pParent->_pLeft = pCur->_pLeft;
+						else
+							pParent->_pRight = pCur->_pLeft;
+					}
+					delete pCur;
+				}
+				else 
+				{
+					//���Һ��Ӷ����ڣ����������������ڵ��뵱ǰ�ڵ㽻��
+					BSTNode<T>* temp = pCur->_pRight;
+					BSTNode<T>* pPre = pCur;
+					while(temp->_pLeft)
+					{
+						pPre = temp;
+						temp = temp->_pLeft;
+					}
+					swap(temp->_key, pCur->_key);
+					if(temp == pPre->_pRight)   //��ǰ�ڵ����Һ��ӿ����Ǹ��ҵ�֧����
+					{
+						pCur->_pRight = temp->_pRight;
+					}
+					else if(temp == pPre->_pLeft)  
+						pPre->_pLeft = temp->_pRight;
+					delete pCur;
+				}
+				return true;
+			}			
+		}
+		return false;
+	}
+
+	BinarySeachTree<T>& operator =(BinarySeachTree<T>& tree)
+	{
+		if(this != tree)
+		{
+			BinarySeachTree<T> tmp(tree);
+			swap(_pRoot,tmp._pRoot);
+		}
+		return *this;
+	}
+
+	BinarySeachTree(const BinarySeachTree<T>& tree)
+		:_pRoot(NULL)
+	{
+		if(tree._pRoot ==NULL)
+			return;
+		queue<BSTNode<T>*> q;
+        q.push(tree._pRoot);
+		while(!q.empty())
+		{
+			BSTNode<T>* pCur = q.front();
+			Insert(pCur->_key);
+			q.pop();
+			if(pCur->_pLeft)
+				q.push(pCur->_pLeft);
+			if(pCur->_pRight)
+				q.push(pCur->_pRight);
+		}
+	}
+
+
+
+	~BinarySeachTree()
+	{
+		_Destory(_pRoot);
+	}
+
+	BSTNode<T>* FindMin()
+	{
+		BSTNode<T>* pCur = _pRoot;
+		while(pCur->_pLeft)
+		{
+			pCur = pCur->_pLeft;
+		}
+		return pCur; 
+	}
+	BSTNode<T>* FindMax()
+	{
+		BSTNode<T>* pCur = _pRoot;
+		while(pCur->_pRight)
+			pCur = pCur->_pRight;
+		return pCur;
+	}
+private:
+	void _Destory(BSTNode<T>* pRoot)
+	{
+		if(pRoot == NULL)
+			return;
+		_Destory(pRoot->_pLeft);
+		_Destory(pRoot->_pRight);
+		delete pRoot;
+	}
+private:
+	BSTNode<T>* _pRoot;
+};
+
+
+
+
